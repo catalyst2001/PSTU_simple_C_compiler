@@ -6,6 +6,11 @@
     <ClCompile Include="scc.cpp" />
     <ClCompile Include="scclex.cpp" />
     <ClCompile Include="memfile.cpp" />
+    <ClCompile Include="textbuf.cpp" />
+    <ClCompile Include="scctest.cpp" />
+    <ClCompile Include="sccprep.cpp" />
+    <ClCompile Include="sccAST.cpp" />
+    <ClCompile Include="scclinker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="outerr.h" />
@@ -13,5 +18,10 @@
     <ClInclude Include="scccom.h" />
     <ClInclude Include="scclex.h" />
     <ClInclude Include="memfile.h" />
+    <ClInclude Include="textbuf.h" />
+    <ClInclude Include="scctest.h" />
+    <ClInclude Include="sccprep.h" />
+    <ClInclude Include="sccAST.h" />
+    <ClInclude Include="scclinker.h" />
   </ItemGroup>
 </Project>

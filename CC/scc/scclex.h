@@ -3,14 +3,14 @@
 #include "scccom.h"
 #include "memfile.h"
 #include "outerr.h"
+#include "textbuf.h"
 
 extern const char* keywords[];
-extern const char* lexems[];
 
-enum SCCT_TOKEN {
+enum SCC_TOK {
 	SCCT_UNKNOWN = 0,
 	SCCT_KEYWORD,
-	SCCT_IDENT,
+	SCCT_IDENT, //identifier
 	SCCT_NUM,
 	SCCT_FNUM,
 	SCCT_LPAREN, SCCT_RPAREN, // '(' ')'
@@ -24,7 +24,6 @@ enum SCCT_TOKEN {
 	SCCT_MUL, // '*'
 	SCCT_SUB, // '-'
 	SCCT_ADD, // '+'
-	SCCT_ASSIGN, // '='
 	SCCT_TILDE, // '~'
 	SCCT_AND, // '&'
 	SCCT_OR, // '|'
@@ -73,7 +72,7 @@ struct scclex_tok {
 	int        flags;
 	size_t     length;
 	char       string[SCCLEX_MAX_TOK_STRING];
-	SCCT_TOKEN tok;
+	SCC_TOK tok;
 };
 
 /* lexer context */
@@ -83,17 +82,11 @@ struct scclex_ctx {
 
 class scclex
 {
-	size_t m_nsize;
-	char  *m_ppos;
-	char  *m_psource;
-	char  *m_psource_end;
-
+	scc_textparser m_src;
 protected:
-	inline bool is_end() { return m_ppos >= m_psource_end; }
-
 	void       make_eof_token(scclex_tok& tok);
 
-	bool       skip_spaces();
+protected:
 	bool       is_keyword(const char* p_str);
 	bool       read_alpha(scclex_tok& tok);
 	bool       read_numeric(scclex_tok& tok);
