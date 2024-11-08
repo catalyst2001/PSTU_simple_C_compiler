@@ -10,7 +10,13 @@
     <ClCompile Include="scctest.cpp" />
     <ClCompile Include="sccprep.cpp" />
     <ClCompile Include="sccAST.cpp" />
-    <ClCompile Include="scclinker.cpp" />
+    <ClCompile Include="scclink.cpp" />
+    <ClCompile Include="sccemit.cpp" />
+    <ClCompile Include="bytewriter.cpp" />
+    <ClCompile Include="strtbl.cpp" />
+    <ClCompile Include="svm_v1_linker.cpp">
+      <Filter>linkers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="outerr.h" />
@@ -22,6 +28,20 @@
     <ClInclude Include="scctest.h" />
     <ClInclude Include="sccprep.h" />
     <ClInclude Include="sccAST.h" />
-    <ClInclude Include="scclinker.h" />
+    <ClInclude Include="scclink.h" />
+    <ClInclude Include="sccemit.h" />
+    <ClInclude Include="bytewriter.h" />
+    <ClInclude Include="strtbl.h" />
+    <ClInclude Include="svm_v1_linker.h">
+      <Filter>linkers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\scvm\SVM.h">
+      <Filter>linkers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="linkers">
+      <UniqueIdentifier>{e918ab57-d5cc-41a4-b5f1-f8032b09195f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

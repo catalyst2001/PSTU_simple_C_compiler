@@ -35,7 +35,7 @@ bool scctests::test_transform_CR_to_unix()
 	size_t size = last_size;
 	printf("buffer size: %zd\n", size);
 	scctest::print_with_CRLF(buf);
-	size_t n_lines = scc_textparser::try_transform_CRLF_to_LF(buf, &size);
+	size_t n_lines = scc_textparser::try_transform_line_completions_CRLF_to_LF(buf, &size);
 	printf("new buffer size: %zd\n", size);
 	scctest::print_with_CRLF(buf);
 	return size < last_size;

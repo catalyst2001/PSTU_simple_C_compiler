@@ -3,35 +3,32 @@
 #include <stdio.h>
 #include <assert.h>
 
-const char* ccmsg_tag_from_type(CCMSG_TYPE t)
+void cc_print(const char* p_str)
 {
-	static const char* p_tags[CCMSG_MAX_TYPES] = {
-		"warning", "error", "internal error"
-	};
-	assert((int)t < CCMSG_MAX_TYPES && "message type tag out of bounds!");
-	return p_tags[(int)t];
+	printf(p_str);
 }
 
-void cc_msg::msg(int num, CCMSG_TYPE t)
+void cc_error(const char* p_str)
 {
+	printf("error: %s\n", p_str);
 }
 
-void cc_msg::msg(CCMSG_TYPE t, const char* pf, ...)
+void cc_warn(const char* p_str)
 {
-	char buf[1024];
+	printf("warning: %s\n", p_str);
+}
+
+void cc_fatal(const char* p_str)
+{
+	printf("internal error: %s\n", p_str);
+}
+
+const char* cc_format(const char* p_format, ...)
+{
+	static char buf[8092];
 	va_list ap;
-	va_start(ap, pf);
-	vsnprintf(buf, sizeof(buf), pf, ap);
+	va_start(ap, p_format);
+	vsnprintf(buf, sizeof(buf), p_format, ap);
 	va_end(ap);
-	printf("%s: %s\n", ccmsg_tag_from_type(t), buf);
-}
-
-void cc_msg::phello()
-{
-	printf(
-		"-----------------------------------\n"
-		" Simple C compiler for bytecode VM \n"
-		" by Deryabin K. \n"
-		"-----------------------------------\n"
-	);
+	return buf;
 }

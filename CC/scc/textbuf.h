@@ -36,7 +36,7 @@ class scc_textparser
 	* @return number of lines
 	*/
 public:
-	static size_t try_transform_CRLF_to_LF(char *p_input, size_t *p_size);
+	static size_t try_transform_line_completions_CRLF_to_LF(char *p_input, size_t *p_size);
 
 public:
 	scc_textparser();
@@ -47,8 +47,8 @@ public:
 	size_t       get_num_lines();
 	bool         is_initialized();
 	void         reset_cursor();
-	void         get_context(scctp_ctx &dst);
-	void         set_context(const scctp_ctx &src);
+	void         store_context(scctp_ctx &dst);
+	void         restore_context(const scctp_ctx &src);
 	bool         is_end();
 	bool         pos_increment();
 	int          get_char();
@@ -56,6 +56,7 @@ public:
 	SCCTP_STATUS skip_all_to_substr(const char *p_substr, size_t substrlen=0);
 	bool         skip_all_to_nextline();
 	bool         increment_lines_count_to_current_pos(char *p_pos);
+	size_t       get_current_line();
 
 	/* text buffer address ranges comparations */
 	inline bool  addr_greater_end(char* p_addr) { return p_addr > m_pend; }

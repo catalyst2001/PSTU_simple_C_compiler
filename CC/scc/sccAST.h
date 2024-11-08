@@ -1,6 +1,7 @@
 #pragma once
 #include <map>
 #include "scccom.h"
+#include "scclex.h"
 
 enum AST_NODE_TYPE {
 	AST_NODE_TYPE_NONE = 0,
@@ -47,6 +48,12 @@ public:
 	inline int           get_flags() { return flags; }
 	inline AST_NODE_TYPE get_node_type() { return m_node_type; }
 	inline ast_node     *get_parent() { return m_pparent; }
+
+	inline size_t        get_num_childs() { return m_child_nodes.size(); }
+	inline ast_node* get_child(size_t idx) {
+		assert(idx < get_num_childs() && "child index out of bounds!");
+		return m_child_nodes[idx];
+	}
 
 protected:
 	inline void          set_flags(int f) { flags = f; }
@@ -292,7 +299,42 @@ public:
 	}
 };
 
-class sccAST
+enum ASTBUILD_STATUS {
+	SCCAST_BUILDER_STATUS_OK = 0,
+	SCCAST_BUILDER_STATUS_SYNTAX_ERROR,
+	SCCAST_BUILDER_STATUS_INPUT_ERROR
+};
+
+#define AST_OK(x) ((x) == SCCAST_BUILDER_STATUS_OK)
+
+/* root AST node */
+class ast_root : public ast_node
 {
+	/* DECLARATIONS */
+	vec_cc<ast_typedecl *> m_types; //type decls
+	std::map<std::string, ast_typedecl*> m_typenamesht;
+	vec_cc<ast_func*>     m_funcs; //funcs
+	std::map<std::string, ast_func*> m_funcnamesht;
+	vec_cc<ast_var*>      m_gvars; //globalvars
+	std::map<std::string, ast_var*> m_gvarnamesht;
+
+public:
+	ast_root();
+	~ast_root();
+
+	ASTBUILD_STATUS build(scclex &lexer);
+	ASTBUILD_STATUS shutdown();
+
+	/* decl type */
+	ast_typedecl *decl_type(const char* p_typename, CCTDT t, size_t tsize, int tidx, bool is_unsigned);
+	ast_typedecl *find_type(const char* p_typename);
+
+	/* decl funcs */
+	ast_func     *decl_func(const char* p_funcname, size_t argscount = 0);
+	ast_func     *find_func(const char* p_funcname);
+
+	/* decl globalvars */
+	ast_var      *decl_globalvar(const char* p_varname, ast_typedecl* p_type, size_t dim = 1, int flags = CCVAR_IS_NONE);
+	ast_var      *find_globalvar(const char* p_varname);
 };
 

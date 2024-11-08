@@ -9,7 +9,7 @@ char* scc_textparser::get_curr_address()
 	return m_ppos;
 }
 
-size_t scc_textparser::try_transform_CRLF_to_LF(char* p_input, size_t* p_size)
+size_t scc_textparser::try_transform_line_completions_CRLF_to_LF(char* p_input, size_t* p_size)
 {
 	/* replace all Windows CRLF '\r\n' to UNIX LF '\n' */
 	char* p_endaddr = p_input + *p_size;
@@ -48,7 +48,7 @@ bool scc_textparser::init(char* p_text_base, size_t n_textbuf_size)
 
 	m_nsize = n_textbuf_size;
 	m_base = p_text_base;
-	m_nlines = try_transform_CRLF_to_LF(m_base, &m_nsize);
+	m_nlines = try_transform_line_completions_CRLF_to_LF(m_base, &m_nsize);
 	m_pend = m_base + m_nsize;
 	m_ppos = m_base; //position starts at buffer begin
 	return true;
@@ -69,13 +69,13 @@ void scc_textparser::reset_cursor()
 	m_ppos = m_base;
 }
 
-void scc_textparser::get_context(scctp_ctx &dst)
+void scc_textparser::store_context(scctp_ctx &dst)
 {
 	dst.current_line = m_ncurr_line;
 	dst.p_position = m_ppos;
 }
 
-void scc_textparser::set_context(const scctp_ctx &src)
+void scc_textparser::restore_context(const scctp_ctx &src)
 {
 	m_ncurr_line = src.current_line;
 	m_ppos = src.p_position;
@@ -161,4 +161,9 @@ bool scc_textparser::increment_lines_count_to_current_pos(char* p_pos)
 		return false;
 	}
 	return true;
+}
+
+size_t scc_textparser::get_current_line()
+{
+	return m_ncurr_line;
 }

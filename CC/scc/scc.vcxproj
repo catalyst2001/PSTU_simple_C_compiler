@@ -127,27 +127,36 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bytewriter.cpp" />
     <ClCompile Include="memfile.cpp" />
     <ClCompile Include="outerr.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="scc.cpp" />
     <ClCompile Include="sccAST.cpp" />
+    <ClCompile Include="sccemit.cpp" />
     <ClCompile Include="scclex.cpp" />
-    <ClCompile Include="scclinker.cpp" />
+    <ClCompile Include="scclink.cpp" />
     <ClCompile Include="sccprep.cpp" />
     <ClCompile Include="scctest.cpp" />
+    <ClCompile Include="strtbl.cpp" />
+    <ClCompile Include="svm_v1_linker.cpp" />
     <ClCompile Include="textbuf.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\scvm\SVM.h" />
+    <ClInclude Include="bytewriter.h" />
     <ClInclude Include="memfile.h" />
     <ClInclude Include="sccAST.h" />
     <ClInclude Include="scccom.h" />
     <ClInclude Include="outerr.h" />
     <ClInclude Include="scc.h" />
+    <ClInclude Include="sccemit.h" />
     <ClInclude Include="scclex.h" />
-    <ClInclude Include="scclinker.h" />
+    <ClInclude Include="scclink.h" />
     <ClInclude Include="sccprep.h" />
     <ClInclude Include="scctest.h" />
+    <ClInclude Include="strtbl.h" />
+    <ClInclude Include="svm_v1_linker.h" />
     <ClInclude Include="textbuf.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

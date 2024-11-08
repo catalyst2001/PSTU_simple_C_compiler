@@ -1,17 +1,9 @@
 #pragma once
 
-enum CCMSG_TYPE : unsigned int {
-	CCMSG_TYPE_WARN = 0,//warning
-	CCMSG_TYPE_ERROR, //error
-	CCMSG_TYPE_INTRERR, //internal error
+//TODO: TEMP FUNCTIONS!
+const char* cc_format(const char *p_format, ...);
 
-	CCMSG_MAX_TYPES
-};
-
-class cc_msg
-{
-public:
-	static void msg(int num, CCMSG_TYPE t);
-	static void msg(CCMSG_TYPE t, const char *pf, ...);
-	static void phello();
-};
+void cc_print(const char *p_str);
+void cc_error(const char *p_str);
+void cc_warn(const char *p_str);
+void cc_fatal(const char *p_str);
