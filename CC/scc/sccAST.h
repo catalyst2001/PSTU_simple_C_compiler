@@ -140,8 +140,8 @@ protected:
 	void set_typeidx(int idx) { typeidx = idx; }
 
 public:
-	ast_typedecl(ast_node *) : ast_node(), type(CCTDT_TYPE_EMPTY), size(0), typeidx(-1) {}
-	ast_typedecl(const char* p_typename, CCTDT t, size_t tsize, int tidx, bool is_unsigned = true) : type(t), size(tsize), typeidx(tidx) {
+	ast_typedecl(ast_node *p_parent) : ast_node(p_parent, AST_NODE_TYPE_TYPE), type(CCTDT_TYPE_EMPTY), size(0), typeidx(-1) {}
+	ast_typedecl(ast_node* p_parent, const char* p_typename, CCTDT t, size_t tsize, int tidx, bool is_unsigned = true) : ast_node(p_parent, AST_NODE_TYPE_TYPE), type(t), size(tsize), typeidx(tidx) {
 		assert(p_typename && "TYPENAME MUST BE SET!");
 		set_name(p_typename);
 		if (is_unsigned) {
@@ -171,7 +171,7 @@ public:
 class ast_scope : public ast_node {
 	ast_node* p_assignto;
 public:
-	ast_scope() {}
+	ast_scope(ast_node *p_parent) : ast_node(p_parent, AST_NODE_TYPE_SCOPE) {}
 	~ast_scope() {}
 
 };
@@ -192,7 +192,8 @@ class ast_var : public ast_node, public ast_named<MAX_VARNAME>
 	size_t        adim; //array dimension
 	ast_typedecl* p_assigned_typedecl;
 public:
-	ast_var(const char* p_varname, ast_typedecl* p_type, size_t dim = 1, int flags = CCVAR_IS_NONE) {
+	ast_var(ast_node *p_parent, const char* p_varname, ast_typedecl* p_type, size_t dim = 1, int flags = CCVAR_IS_NONE) :
+		ast_node(p_parent, AST_NODE_TYPE_VAR) {
 		p_assigned_typedecl = p_type;
 		varflags = flags;
 		adim = dim;
@@ -242,8 +243,8 @@ protected:
 
 public:
 	/* conmstructor */
-	ast_func(ast_node *p_parent, const char* p_funcname, size_t argscount = 0) {
-		set_parent(p_parent);
+	ast_func(ast_node *p_parent, const char* p_funcname, size_t argscount = 0) :
+		ast_node(p_parent, AST_NODE_TYPE_FUNC) {
 		set_name(p_funcname);
 		checksum = 0;
 		if (argscount) {
@@ -255,7 +256,7 @@ public:
 	/* ARGS */
 	void add_funcarg(ast_var* p_farg) { func_args.push_back(p_farg); }
 	ast_var* new_funcarg(const char* p_argname, ast_typedecl* p_type, size_t dim = 1, int flags = CCVAR_IS_NONE) {
-		ast_var* p_farg = new ast_var(p_argname, p_type, dim, flags);
+		ast_var* p_farg = new ast_var(this, p_argname, p_type, dim, flags);
 		add_funcarg(p_farg);
 		return p_farg;
 	}
@@ -268,7 +269,7 @@ public:
 	/* LVARS */
 	void add_localvar(ast_var* p_lvar) { func_lvars.push_back(p_lvar); }
 	ast_var* new_localvar(const char* p_varname, ast_typedecl* p_type, size_t dim = 1, int flags = CCVAR_IS_NONE) {
-		ast_var* p_var = new ast_var(p_varname, p_type, dim, flags);
+		ast_var* p_var = new ast_var(this, p_varname, p_type, dim, flags);
 		add_localvar(p_var);
 		return p_var;
 	}

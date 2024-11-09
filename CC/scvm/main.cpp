@@ -1,20 +1,46 @@
-﻿// scvm.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
-//
+﻿#include "svmi.h"
 
-#include <iostream>
-
-int main()
+int example_run(int argc, char** argv)
 {
-    std::cout << "Hello World!\n";
+  /* load executable image */
+  SVMI_image* p_image = new SVMI_image();
+  SVMI_STATUS status = p_image->load_from_disk("main_test.vmx");
+  if (status != SVMI_STATUS_OK) {
+    printf("failed to load image from disk. Status: %d\n", (int)status);
+    return 1;
+  }
+
+  /* create virtual machine */
+  SVMI* p_vm = new SVMI();
+  static const SVMI_native_decl native_decls[] = { {
+      [](uint8_t* p_pcode, SVMI_context* p_ctx) -> SVMI_STATUS {
+      SVMI_VCPU_registers* p_regs = p_ctx->get_regs();
+      printf("STRING FROM VM: %s\n", (const char*)p_regs->A);
+    }, "print" },
+    { nullptr, nullptr }
+  };
+
+  status = p_vm->init(p_image, native_decls);
+  if (status != SVMI_STATUS_OK) {
+    printf("failed to initializing VM. Status: %d\n", (int)status);
+    return 1;
+  }
+
+  /* create new scope */
+  do {
+    SVMI_context_scope ctx_scope(*p_vm);
+    SVMI_context *p_ctx = ctx_scope.get_context();
+    p_ctx->call_push_arg_address(argv);
+    p_ctx->call_push_arg_cell(argc);
+    p_vm->call(p_ctx, );
+  } while (0);
 }
 
-// Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
-// Отладка программы: F5 или меню "Отладка" > "Запустить отладку"
+int main(int argc, char **argv)
+{
+  
 
-// Советы по началу работы 
-//   1. В окне обозревателя решений можно добавлять файлы и управлять ими.
-//   2. В окне Team Explorer можно подключиться к системе управления версиями.
-//   3. В окне "Выходные данные" можно просматривать выходные данные сборки и другие сообщения.
-//   4. В окне "Список ошибок" можно просматривать ошибки.
-//   5. Последовательно выберите пункты меню "Проект" > "Добавить новый элемент", чтобы создать файлы кода, или "Проект" > "Добавить существующий элемент", чтобы добавить в проект существующие файлы кода.
-//   6. Чтобы снова открыть этот проект позже, выберите пункты меню "Файл" > "Открыть" > "Проект" и выберите SLN-файл.
+
+
+  return 0;
+}

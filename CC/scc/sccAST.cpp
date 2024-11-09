@@ -45,7 +45,7 @@ ASTBUILD_STATUS ast_root::shutdown()
 
 ast_typedecl* ast_root::decl_type(const char* p_typename, CCTDT t, size_t tsize, int tidx, bool is_unsigned)
 {
-  ast_typedecl* p_typedecl = new ast_typedecl(p_typename, t, tsize, tidx, is_unsigned);
+  ast_typedecl* p_typedecl = new ast_typedecl(this, p_typename, t, tsize, tidx, is_unsigned);
   m_types.push_back(p_typedecl);
   m_typenamesht.emplace(p_typename, p_typedecl);
   return p_typedecl;
@@ -58,7 +58,7 @@ ast_typedecl* ast_root::find_type(const char* p_typename)
 
 ast_func* ast_root::decl_func(const char* p_funcname, size_t argscount)
 {
-  ast_func* p_func = new ast_func(p_funcname, argscount);
+  ast_func* p_func = new ast_func(this, p_funcname, argscount);
   m_funcs.push_back(p_func);
   m_funcnamesht.emplace(p_funcname, p_func);
   return p_func;
@@ -71,7 +71,7 @@ ast_func* ast_root::find_func(const char* p_funcname)
 
 ast_var* ast_root::decl_globalvar(const char* p_varname, ast_typedecl* p_type, size_t dim, int flags)
 {
-  ast_var* p_var = new ast_var(p_varname, p_type, dim, flags);
+  ast_var* p_var = new ast_var(this, p_varname, p_type, dim, flags);
   m_gvars.push_back(p_var);
   m_gvarnamesht.emplace(p_varname, p_var);
   return p_var;

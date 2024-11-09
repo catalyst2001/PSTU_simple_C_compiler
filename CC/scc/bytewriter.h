@@ -7,10 +7,9 @@ class bytewriter
 public:
 	bytewriter();
 	~bytewriter();
-	void write8(int32_t dw);
-	void write16(int32_t dw);
-	void write32(int32_t dw);
-
+	void     write8(int32_t dw);
+	void     write16(int32_t dw);
+	void     write32(int32_t dw);
 	size_t   get_size();
 	uint8_t* get_data();
 };

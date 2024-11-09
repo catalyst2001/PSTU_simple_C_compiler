@@ -487,8 +487,6 @@ SCCLEX_STATUS scclex::init(memfile& mf)
 
 SCCLEX_STATUS scclex::next_tok(scclex_tok& tok)
 {
-	SCCLEX_STATUS status;
-
 	/* reset token */
 	tok.flags = SCCTOK_OP_DEFAULT;
 	tok.string[0] = 0;

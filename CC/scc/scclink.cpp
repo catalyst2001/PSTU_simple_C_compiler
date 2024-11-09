@@ -32,7 +32,7 @@ scclinkmgr::~scclinkmgr()
 iscclink* scclinkmgr::get_linker(const char* p_linker)
 {
 	for (size_t i = 0; i < n_nlinkers; i++) {
-		if (!stricmp(m_registred_linkers[i]->get_name(), p_linker)) {
+		if (!_stricmp(m_registred_linkers[i]->get_name(), p_linker)) {
 			return m_registred_linkers[i];
 		}
 	}

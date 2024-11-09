@@ -139,11 +139,13 @@
     <ClCompile Include="sccprep.cpp" />
     <ClCompile Include="scctest.cpp" />
     <ClCompile Include="strtbl.cpp" />
+    <ClCompile Include="svmx.cpp" />
     <ClCompile Include="svm_v1_linker.cpp" />
     <ClCompile Include="textbuf.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\scvm\SVM.h" />
+    <ClInclude Include="bitop.h" />
     <ClInclude Include="bytewriter.h" />
     <ClInclude Include="memfile.h" />
     <ClInclude Include="sccAST.h" />
@@ -156,6 +158,7 @@
     <ClInclude Include="sccprep.h" />
     <ClInclude Include="scctest.h" />
     <ClInclude Include="strtbl.h" />
+    <ClInclude Include="svmx.h" />
     <ClInclude Include="svm_v1_linker.h" />
     <ClInclude Include="textbuf.h" />
   </ItemGroup>

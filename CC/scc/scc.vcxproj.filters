@@ -17,6 +17,7 @@
     <ClCompile Include="svm_v1_linker.cpp">
       <Filter>linkers</Filter>
     </ClCompile>
+    <ClCompile Include="svmx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="outerr.h" />
@@ -38,6 +39,8 @@
     <ClInclude Include="..\scvm\SVM.h">
       <Filter>linkers</Filter>
     </ClInclude>
+    <ClInclude Include="bitop.h" />
+    <ClInclude Include="svmx.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="linkers">
