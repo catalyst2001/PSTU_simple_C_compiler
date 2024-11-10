@@ -478,11 +478,9 @@ SVMI_STATUS SVMI::exec(SVMI_context* p_ctx)
 			if (!p_regs->SP)
 				return SVMI_STATUS_STACK_OVERFLOW;
 
-			if (instr.mode == SVMI_ARG_REG) {
+			if (instr.mode == SVMI_ARG_REG)
 				p_regs->regs[instr.rdst] = p_stack[p_regs->SP];
-				p_regs->SP--;
-				break;
-			}
+
 			p_regs->SP--;
 			break;
 
