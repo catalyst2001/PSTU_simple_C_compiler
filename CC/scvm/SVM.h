@@ -7,8 +7,14 @@
 #include <stdint.h>
 #include "bitop.h"
 
+/* processor state flags */
+#define VMSRF_ZF (1 << 0) /*< zero flag */
+#define VMSRF_SF (1 << 1) /*< sign flag */
+#define VMSRF_CF (1 << 2) /*< carry flag */
+
 /* cell registers and stack align type */
 typedef int cell_t;
+typedef unsigned int ucell_t;
 
 #define SVM_CELL_SIZE sizeof(cell_t)
 
@@ -48,7 +54,7 @@ enum SVMI_ARG_TYPE {
 * 6  bit [26-31] - flags
 */
 
-#define VM_I_SIZE         (sizeof(int))
+#define VM_I_SIZE         (sizeof(int)) // VM each instruction size
 #define VM_I_OPC_BITS     (16)
 #define VM_I_MODE_BITS    (2)
 #define VM_I_REG_DIR_BITS (4)

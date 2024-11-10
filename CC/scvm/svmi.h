@@ -20,7 +20,11 @@ enum SVMI_STATUS {
 	SVMI_STATUS_OK = 0,
 	SVMI_STATUS_INVALID_PARAM,
 	SVMI_STATUS_ABNORMAL_TERMINATE,
-	SVMI_STATUS_INVALID_INSTRUCTION
+	SVMI_STATUS_INVALID_INSTRUCTION,
+	SVMI_STATUS_FLOATING_POINT_DIVISION_BY_ZERO,
+	SVMI_STATUS_INT_DIVISION_BY_ZERO,
+	SVMI_STATUS_EXECUTION_HALTED,
+	SVMI_STATUS_STACK_OVERFLOW
 };
 
 /* reference counter base class */
@@ -54,14 +58,36 @@ struct SVMI_VCPU_registers
 	uint32_t SR; //state register
 	union {
 		struct {
-			cell_t A, B, C, D;
-			cell_t X, Y, Z, W;
-			cell_t IP, SP, CS, DS, SS;
+			cell_t   A, B, C, D;
+			cell_t   X, Y, Z, W;
+			ucell_t  IP, SP, CS, DS, SS;
 		};
 		cell_t regs[4 + 4 + 5];
 	};
 
-	inline void add_IP(uint32_t v) { IP += v; }
+	inline void IP_add(uint32_t v) { IP += v; }
+
+	/* SR methods */
+	inline void SR_reset() { SR = 0; }
+	inline void SR_set_flags(cell_t val) {
+		/* zero flag */
+		if (!val)
+			SR |= VMSRF_ZF;
+		/* sign */
+		if (val < 0)
+			SR |= VMSRF_SF;
+	}
+	inline void SR_set_flags(float fval) {
+		/* zero flag */
+		if (fabsf(fval) < FLT_EPSILON)
+			SR |= VMSRF_ZF;
+		/* sign */
+		if (fval < 0.f)
+			SR |= VMSRF_SF;
+	}
+	inline bool SR_is_set(cell_t flag) {
+		return SR & flag;
+	}
 };
 
 /* base image info */
@@ -90,9 +116,12 @@ public:
 	inline uint8_t* get_imports_table() { return m_pimage_imports_table; }
 };
 
+class SVMI;
+
 /* for each thread SVMI context */
 class SVMI_context : private SVMI_VCPU_registers, public SVMI_reference_counted
 {
+	friend class SVMI;
 	struct SVMI_call_context {
 		uint32_t return_address;
 		uint32_t previous_SP;
@@ -100,9 +129,13 @@ class SVMI_context : private SVMI_VCPU_registers, public SVMI_reference_counted
 	std::vector<SVMI_call_context> m_call_contexts;
 
 	/* stack */
-	uint32_t  m_nstack_size;
-	uint32_t* m_pstack;
+	ucell_t   m_nstack_size;
+	cell_t   *m_pstack;
 
+protected:
+	/* for SVMI */
+	inline ucell_t  get_stack_size() { return m_nstack_size; }
+	inline cell_t  *get_stack() { return m_pstack; }
 public:
 	SVMI_context() {}
 	~SVMI_context() {}
