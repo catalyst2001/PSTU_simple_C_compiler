@@ -57,7 +57,7 @@ SVMI_STATUS SVMI::exec(SVMI_context* p_ctx)
 			}
 			// move value from register to memory
 			// s: SVM_OP_MOV SVMI_ARG_REG rdst rsrc
-			if (instr.mode == SVMI_ARG_REG) {
+			if (instr.mode == SVMI_ARG_ADDR) {
 				p_data[p_regs->regs[instr.rdst]] = p_regs->regs[instr.rsrc] & 0xff;
 				break; /* no args */
 			}

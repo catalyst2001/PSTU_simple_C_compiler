@@ -44,6 +44,8 @@ public:
 
 	bool         init(char *p_text_base, size_t n_textbuf_size);
 
+	size_t       get_size();
+	size_t       get_position();
 	size_t       get_num_lines();
 	bool         is_initialized();
 	void         reset_cursor();

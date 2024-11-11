@@ -54,6 +54,16 @@ bool scc_textparser::init(char* p_text_base, size_t n_textbuf_size)
 	return true;
 }
 
+size_t scc_textparser::get_size()
+{
+	return m_nsize;
+}
+
+size_t scc_textparser::get_position()
+{
+	return size_t(m_ppos - m_base);
+}
+
 size_t scc_textparser::get_num_lines()
 {
 	return m_nlines;

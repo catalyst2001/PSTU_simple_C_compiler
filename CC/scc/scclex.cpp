@@ -1,20 +1,5 @@
 #include "scclex.h"
 
-//https://cmcmsu.info/download/cpl.lexis.pdf
-const char* keywords[] = {
-	/* builtin typ]es */
-	"bool", "char", "byte", "short", "ushort", "int", "uint", "const"
-	
-	/* special */
-	"import", "export",
-
-	/*  */
-	"struct", "auto", "typedef"
-
-	/* operators */
-	"if", "else", "do", "while", "for"
-};
-
 void scclex::make_eof_token(scclex_tok& tok)
 {
 	tok.tok = SCCT_EOF;
@@ -53,6 +38,7 @@ void scclex::init_keywords()
 	m_keywords["for"] = SCCKW_FOR;
 	m_keywords["break"] = SCCKW_BREAK;
 	m_keywords["continue"] = SCCKW_CONTINUE;
+	m_keywords["extern"] = SCCKW_EXTERN;
 }
 
 SCC_KW scclex::find_keyword(const char* p_str)
@@ -79,8 +65,10 @@ bool scclex::read_alpha(scclex_tok& tok)
 	int num_quotes = 0;
 	tok.length = 0;
 	tok.start_line = m_src.get_current_line();
-	if (!isalpha(m_src.get_char()) || m_src.get_char() != '_' || m_src.get_char() != '"')
+	if (!isalpha(m_src.get_char()) && m_src.get_char() != '_' && m_src.get_char() != '"')
 		return false;
+
+	printf("position %zd of %zd. %c\n", m_src.get_position(), m_src.get_size(), m_src.get_char());
 
 	/* process string literals */
 	if (m_src.get_char() == '"') {
@@ -141,18 +129,19 @@ bool scclex::read_alpha(scclex_tok& tok)
 				continue;
 			}
 			tok.string[tok.length++] = curr_char;
+			m_src.pos_increment();
 		}
 		return true;
 	}
 
 	/* process identifiers and keywords */
 	while (!m_src.is_end()) {
-		if (m_src.get_char() && (isalpha(m_src.get_char()) || m_src.get_char() == '_' || m_src.get_char() == '"')) {
+		if (m_src.get_char() && (isalpha(m_src.get_char()) || isalnum(m_src.get_char()) || m_src.get_char() == '_' || m_src.get_char() == '"')) {
 			tok.string[tok.length++] = m_src.get_char();
 			m_src.pos_increment();
 			continue;
 		}
-		return false;
+		break;
 	}
 	tok.string[tok.length] = '\0';
 
@@ -592,10 +581,6 @@ SCCLEX_STATUS scclex::next_tok(scclex_tok& tok)
 		return SCCLEX_STATUS_OK;
 
 	/* try read identifs and keywords */
-	if (read_alpha(tok))
-		return SCCLEX_STATUS_OK;
-
-	/* try read numeric */
 	if (read_alpha(tok))
 		return SCCLEX_STATUS_OK;
 
