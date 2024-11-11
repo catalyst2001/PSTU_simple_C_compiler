@@ -51,6 +51,6 @@ inline void bitread(int& dst, int nbits=8)
 
 int main()
 {
-
+	scclex_test();
   return 0;
 }

@@ -39,6 +39,7 @@ void scclex::init_keywords()
 	//"import", "export",
 	m_keywords["import"] = SCCKW_IMPORT;
 	m_keywords["export"] = SCCKW_EXPORT;
+	m_keywords["return"] = SCCKW_RETURN;
 
 	//"struct", "typedef"
 	m_keywords["struct"] = SCCKW_STRUCT;	
@@ -50,6 +51,8 @@ void scclex::init_keywords()
 	m_keywords["do"] = SCCKW_DO;
 	m_keywords["while"] = SCCKW_WHILE;
 	m_keywords["for"] = SCCKW_FOR;
+	m_keywords["break"] = SCCKW_BREAK;
+	m_keywords["continue"] = SCCKW_CONTINUE;
 }
 
 SCC_KW scclex::find_keyword(const char* p_str)
@@ -64,14 +67,87 @@ SCC_KW scclex::find_keyword(const char* p_str)
 	return m_keywords[p_str]; //kw found
 }
 
+bool scclex::process_string_literal(scclex_tok& tok)
+{
+	return false;
+}
+
 bool scclex::read_alpha(scclex_tok& tok)
 {
 	/* read alphabet symbols */
+	int curr_char;
+	int num_quotes = 0;
 	tok.length = 0;
 	tok.start_line = m_src.get_current_line();
-	; //this token is not keyword
-	while (m_src.get_char() && (isalpha(m_src.get_char()) || m_src.get_char() == '_')) {
-		if (!m_src.is_end()) {
+	if (!isalpha(m_src.get_char()) || m_src.get_char() != '_' || m_src.get_char() != '"')
+		return false;
+
+	/* process string literals */
+	if (m_src.get_char() == '"') {
+		tok.tok = SCCT_STRING;
+		m_src.pos_increment(); // move next from '"'
+		/* is not end of buffer? */
+		while (!m_src.is_end()) {
+			curr_char = m_src.get_char();
+			/* finish string? */
+			if (curr_char == '"') {
+				m_src.pos_increment();
+				tok.string[tok.length++] = '\0';
+				return true;
+			}
+			/* escaped strings or escape sequences? */
+			if (curr_char == '\\') {
+				m_src.pos_increment(); //skip '\'
+				if (m_src.is_end()) {
+					break;
+				}
+				/* handle escape sequences */
+				curr_char = m_src.get_char();
+				switch (curr_char) {
+				case 'r':
+					tok.string[tok.length++] = '\r';
+					break;
+				case 'n':
+					tok.string[tok.length++] = '\n';
+					break;
+				case 't':
+					tok.string[tok.length++] = '\t';
+					break;
+				case 'v':
+					tok.string[tok.length++] = '\v';
+					break;
+				case '"':
+					tok.string[tok.length++] = '"';
+					break;
+				case '\'':
+					tok.string[tok.length++] = '\'';
+					break;
+				case '\\':
+					tok.string[tok.length++] = '\\';
+					break;
+				case '0':
+					tok.string[tok.length++] = '\0';
+					break;
+				case '?':
+					tok.string[tok.length++] = '\?';
+					break;
+				case 'a':
+					tok.string[tok.length++] = '\a';
+					break;
+				default:
+					tok.string[tok.length++] = curr_char;
+					break;
+				}
+				continue;
+			}
+			tok.string[tok.length++] = curr_char;
+		}
+		return true;
+	}
+
+	/* process identifiers and keywords */
+	while (!m_src.is_end()) {
+		if (m_src.get_char() && (isalpha(m_src.get_char()) || m_src.get_char() == '_' || m_src.get_char() == '"')) {
 			tok.string[tok.length++] = m_src.get_char();
 			m_src.pos_increment();
 			continue;
@@ -100,6 +176,9 @@ bool scclex::read_numeric(scclex_tok& tok)
 	/* read numbers */
 	tok.length = 0;
 	tok.start_line = m_src.get_current_line();
+	if (!m_src.get_char() || !isdigit(m_src.get_char()))
+		return false;
+
 	while (m_src.get_char() && isdigit(m_src.get_char())) {
 		if (!m_src.is_end()) {
 			tok.string[tok.length++] = m_src.get_char();
@@ -177,10 +256,10 @@ bool scclex::read_delims(scclex_tok& tok)
 					tok.start_line = m_src.get_current_line();
 					//TODO: SCCT_MOD_ASSIGN OK!
 					tok.tok = SCCT_MOD_ASSIGN; // %=
-					return true;
+					break;
 				}
 			}
-			return true;
+			break;
 		} //END case '%'
 
 			/* + (add) */
@@ -194,16 +273,16 @@ bool scclex::read_delims(scclex_tok& tok)
 				if (m_src.get_char() == '+') {
 					tok.start_line = m_src.get_current_line();
 					tok.tok = SCCT_INC; //++
-					return true;
+					break;
 				}
 				//TODO: SCCT_ADD_ASSIGN OK!
 				if (m_src.get_char() == '=') {
 					tok.start_line = m_src.get_current_line();
 					tok.tok = SCCT_ADD_ASSIGN; //+=
-					return true;
+					break;
 				}
 			}
-			return true;
+			break;
 		} // END case '+'
 
 			/* - (sub) */
@@ -216,22 +295,22 @@ bool scclex::read_delims(scclex_tok& tok)
 					tok.start_line = m_src.get_current_line();
 					//TODO: SCCT_INC OK!
 					tok.tok = SCCT_INC; //--
-					return true;
+					break;
 				}
 				if (m_src.get_char() == '=') {
 					tok.start_line = m_src.get_current_line();
 					//TODO: SCCT_SUB_ASSIGN OK!
 					tok.tok = SCCT_SUB_ASSIGN; //-=
-					return true;
+					break;
 				}
 				if (m_src.get_char() == '>') {
 					tok.start_line = m_src.get_current_line();
 					//TODO: SCCT_ARROW OK!
 					tok.tok = SCCT_ARROW; //->
-					return true;
+					break;
 				}
 			}
-			return true;
+			break;
 		} //END case '-'
 
 			/* * (mul) */
@@ -245,10 +324,10 @@ bool scclex::read_delims(scclex_tok& tok)
 					tok.start_line = m_src.get_current_line();
 					//TODO: SCCT_MUL_ASSIGN OK!
 					tok.tok = SCCT_MUL_ASSIGN; //*=
-					return true;
+					break;
 				}
 			}
-			return true;
+			break;
 		} //END case '*'
 
 			/* / (div) */
@@ -262,10 +341,10 @@ bool scclex::read_delims(scclex_tok& tok)
 					tok.start_line = m_src.get_current_line();
 					//TODO: SCCT_DIV_ASSIGN OK!
 					tok.tok = SCCT_DIV_ASSIGN; // /=
-					return true;
+					break;
 				}
 			}
-			return true;
+			break;
 		} //END case '/'
 
 			/* | (biwise OR ) */
@@ -279,16 +358,16 @@ bool scclex::read_delims(scclex_tok& tok)
 					tok.start_line = m_src.get_current_line();
 					//TODO: SCCT_LOGICAL_OR OK!
 					tok.tok = SCCT_LOGICAL_OR; // ||
-					return true;
+					break;
 				}
 				if (m_src.get_char() == '=') {
 					tok.start_line = m_src.get_current_line();
 					//TODO: SCCT_OR_ASSIGN OK!
 					tok.tok = SCCT_OR_ASSIGN; // |=
-					return true;
+					break;
 				}
 			}
-			return true;
+			break;
 		} //END case '|'
 
 	 /* < (less) */
@@ -302,7 +381,7 @@ bool scclex::read_delims(scclex_tok& tok)
 					tok.start_line = m_src.get_current_line();
 					//TODO: SCCT_LESS_EQUAL OK!
 					tok.tok = SCCT_LESS_EQUAL; // <=
-					return true;
+					break;
 				}
 
 				if (m_src.get_char() == '<') {
@@ -316,14 +395,14 @@ bool scclex::read_delims(scclex_tok& tok)
 							tok.start_line = m_src.get_current_line();
 							//TODO: SCCT_LSHIFT_ASSIGN OK!
 							tok.tok = SCCT_LSHIFT_ASSIGN; // <<=
-							return true;
+							break;
 						}
 					}
 					m_src.restore_context(parser_ctx); //rollback
-					return true;
+					break;
 				}
 			}
-			return true;
+			break;
 		} //END case '<'	
 
 			/* > (greater) */
@@ -337,7 +416,7 @@ bool scclex::read_delims(scclex_tok& tok)
 					tok.start_line = m_src.get_current_line();
 					//TODO: SCCT_GREATER_EQUAL OK!
 					tok.tok = SCCT_GREATER_EQUAL; // >=
-					return true;
+					break;
 				}
 
 				if (m_src.get_char() == '>') {
@@ -351,14 +430,14 @@ bool scclex::read_delims(scclex_tok& tok)
 							tok.start_line = m_src.get_current_line();
 							//TODO: SCCT_RSHIFT_ASSIGN OK!
 							tok.tok = SCCT_RSHIFT_ASSIGN; // >>=
-							return true;
+							break;
 						}
 					}
 					m_src.restore_context(parser_ctx); //rollback
-					return true;
+					break;
 				}
 			}
-			return true;
+			break;
 		} //END case '>'	
 
 			/* & (biwise AND ) */
@@ -373,16 +452,16 @@ bool scclex::read_delims(scclex_tok& tok)
 					//TODO: SCCT_LOGICAL_AND OK!
 					tok.flags = SCCTOK_OP_LITVARLOG;
 					tok.tok = SCCT_LOGICAL_AND; // &&
-					return true;
+					break;
 				}
 				if (m_src.get_char() == '=') {
 					tok.start_line = m_src.get_current_line();
 					//TODO: SCCT_AND_ASSIGN OK!
 					tok.tok = SCCT_AND_ASSIGN; // &=
-					return true;
+					break;
 				}
 			}
-			return true;
+			break;
 		} //END case '&'
 
 			/* ^ (XOR) */
@@ -396,10 +475,10 @@ bool scclex::read_delims(scclex_tok& tok)
 					tok.start_line = m_src.get_current_line();
 					//TODO: SCCT_XOR_ASSIGN OK!
 					tok.tok = SCCT_XOR_ASSIGN; // ^=
-					return true;
+					break;
 				}
 			}
-			return true;
+			break;
 		} //END case '^'
 
 			//TODO: SCCT_ASSIGNMENT
@@ -412,10 +491,10 @@ bool scclex::read_delims(scclex_tok& tok)
 					tok.start_line = m_src.get_current_line();
 					tok.flags = SCCTOK_OP_LITVARLOG;
 					tok.tok = SCCT_EQUAL; // ==
-					return true;
+					break;
 				}
 			}
-			return true;
+			break;
 		}
 
 		//TODO: SCCT_NOT OK!
@@ -428,10 +507,10 @@ bool scclex::read_delims(scclex_tok& tok)
 					tok.start_line = m_src.get_current_line();
 					//TODO: SCCT_NOT_EQUAL OK!
 					tok.tok = SCCT_NOT_EQUAL; // !=
-					return true;
+					break;
 				}
 			}
-			return true;
+			break;
 		} //END case '!'
 
 		//TODO: SCCT_XOR OK!
@@ -439,7 +518,7 @@ bool scclex::read_delims(scclex_tok& tok)
 			tok.flags = SCCTOK_OP_BITWISE|SCCTOK_OP_ARG_LITERAL;
 			tok.tok = SCCT_XOR;
 			tok.start_line = m_src.get_current_line();
-			return true;
+			break;
 		} //END case '~'
 
 		//TODO: SCCT_DOT OK!
@@ -447,21 +526,30 @@ bool scclex::read_delims(scclex_tok& tok)
 			tok.flags = SCCTOK_OP_DEFAULT;
 			tok.tok = SCCT_DOT;
 			tok.start_line = m_src.get_current_line();
-			return true;
+			break;
 		} //END case '.'
+
+//TODO: SCCT_DOT OK!
+		case ',': {
+			tok.flags = SCCTOK_OP_DEFAULT;
+			tok.tok = SCCT_COMMA;
+			tok.start_line = m_src.get_current_line();
+			break;
+		} //END case ','
 
 		//TODO: SCCT_QUESTION OK!
 		case '?': {
 			tok.flags = SCCTOK_OP_DEFAULT;
 			tok.tok = SCCT_QUESTION;
 			tok.start_line = m_src.get_current_line();
-			return true;
+			break;
 		} //END case '?'
 
 		default:
 			/* unrecognized sequence */
 			return false;
 		}
+		m_src.pos_increment();
 	}
 	return true;
 }
@@ -499,6 +587,10 @@ SCCLEX_STATUS scclex::next_tok(scclex_tok& tok)
 		return SCCLEX_STATUS_NO_MORE_DATA;
 	}
 
+	/* try read delimeters */
+	if (read_delims(tok))
+		return SCCLEX_STATUS_OK;
+
 	/* try read identifs and keywords */
 	if (read_alpha(tok))
 		return SCCLEX_STATUS_OK;
@@ -509,10 +601,6 @@ SCCLEX_STATUS scclex::next_tok(scclex_tok& tok)
 
 	/* try read numbers */
 	if(read_numeric(tok))
-		return SCCLEX_STATUS_OK;
-
-	/* try read delimeters */
-	if(read_delims(tok))
 		return SCCLEX_STATUS_OK;
 
 	/* nothing not match. is end position??! */

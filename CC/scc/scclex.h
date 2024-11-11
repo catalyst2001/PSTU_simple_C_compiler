@@ -17,6 +17,7 @@
 enum SCC_TOK {
 	SCCT_UNKNOWN = 0,
 	SCCT_KEYWORD,
+	SCCT_STRING,
 	SCCT_IDENT, // identifier
 	SCCT_INUM, // integer number
 	SCCT_FNUM, // float/double number
@@ -75,6 +76,7 @@ enum SCC_TOK {
 	SCCT_SEMICOLON, // ';'
 	SCCT_TILDE, // '~'
 	SCCT_DOT, // '.'
+	SCCT_COMMA, // ','
 	SCCT_QUESTION, // '?'
 
 	SCCT_EOF
@@ -107,12 +109,16 @@ enum SCC_KW : uint32_t {
 	/* special keywords */
 	SCCKW_IMPORT,
 	SCCKW_EXPORT,
+	SCCKW_RETURN,
 
 	SCCKW_IF,
 	SCCKW_ELSE,
 	SCCKW_DO,
 	SCCKW_WHILE,
-	SCCKW_FOR
+	SCCKW_FOR,
+
+	SCCKW_BREAK,
+	SCCKW_CONTINUE
 };
 
 #define LEX_KW_IS_TYPE(x) ((x) >= SCCKW_BOOL && (x) <= SCCKW_TYPEDEF)
@@ -161,6 +167,7 @@ protected:
 	void       init_keywords(); //defines keywords here
 protected:
 	SCC_KW     find_keyword(const char* p_str);
+	bool       process_string_literal(scclex_tok& tok);
 	bool       read_alpha(scclex_tok& tok);
 	bool       read_numeric(scclex_tok& tok);
 	bool       read_delims(scclex_tok& tok);

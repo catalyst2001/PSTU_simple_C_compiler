@@ -24,11 +24,13 @@ SVMI_STATUS SVMI_image::load_from_memory(uint8_t* p_image_data, size_t image_siz
 SVMI_STATUS SVMI::exec(SVMI_context* p_ctx)
 {
 	assert(m_pimage_info && "image ptr was nullptr!");
-	SVM_instruction instr;
-	uint8_t  *p_pcode = m_pimage_info->get_code();
-	uint8_t  *p_data = m_pimage_info->get_data();
-	cell_t   *p_stack = p_ctx->get_stack();
+	SVM_instruction   instr;
+	SVMI_call_context call_ctx;
+	uint8_t          *p_pcode = m_pimage_info->get_code();
+	uint8_t          *p_data = m_pimage_info->get_data();
+	cell_t           *p_stack = p_ctx->get_stack();
 	SVMI_VCPU_registers* p_regs = p_ctx->get_regs();
+	const SVMI_native_decl* p_imp;
 	union {
 		struct { float  fa, fb, fc; };
 		struct { cell_t ia, ib, ic; };
@@ -471,7 +473,7 @@ SVMI_STATUS SVMI::exec(SVMI_context* p_ctx)
 				return SVMI_STATUS_STACK_OVERFLOW;
 
 			p_stack[p_regs->SP++] = p_regs->SR;
-			break;
+			break; /* no args */
 
 		case SVM_OP_POP:
 			/* detect stack overflow */
@@ -482,7 +484,7 @@ SVMI_STATUS SVMI::exec(SVMI_context* p_ctx)
 				p_regs->regs[instr.rdst] = p_stack[p_regs->SP];
 
 			p_regs->SP--;
-			break;
+			break; /* no args */
 
 		case SVM_OP_POPSR:
 			/* detect stack overflow */
@@ -490,19 +492,56 @@ SVMI_STATUS SVMI::exec(SVMI_context* p_ctx)
 				return SVMI_STATUS_STACK_OVERFLOW;
 
 			p_regs->SR = p_stack[p_regs->SP++];
-			break;
+			break; /* no args */
 
-		case SVM_OP_CALL:
-			break;
-
+			/* call proc/import */
+		case SVM_OP_CALL:			
 		case SVM_OP_NCALL:
-			break;
+			/* read arg */
+			ia = *((cell_t*)&p_pcode[p_regs->IP]);
+
+			/* is SVM_OP_CALL? */
+			if (instr.opcode == SVM_OP_CALL) {
+				call_ctx.previous_SP = p_ctx->SP;
+				call_ctx.return_address = p_ctx->IP + SVM_CELL_SIZE; // [instruction (4bytes)][arg (SVM_CELL_SIZE)] (next code...)
+				if (!p_ctx->push_call_context(call_ctx)) {
+					/* call context stack overflowed */
+					return SVMI_STATUS_CALL_CONTEXT_STACK_OVERFLOW;
+				}
+				/* change IP value to address */
+				p_ctx->IP = ia;
+				break;
+			}
+			/* is SVM_OP_NCALL? */
+			/* is valid native func index? */
+			if (ia >= (cell_t)m_vnatives_idxs.size())
+				return SVMI_STATUS_IMPORT_INDEX_OUT_OF_BOUNDS;
+
+			/* get needed import native */
+			p_imp = &m_pnatives[m_vnatives_idxs[ia]];
+			assert(p_imp->p_nativefunc && "p_imp->p_nativefunc was nullptr!");
+			p_regs->A = p_imp->p_nativefunc(p_ctx);
+			p_regs->IP_add(SVM_CELL_SIZE); //skip instr 4-bytes arg
+			break; /* 1 arg */
 
 		case SVM_OP_RET:
-			break;
+			if (!p_ctx->pop_call_context(call_ctx)) {
+				/* call context stack overflowed */
+				return SVMI_STATUS_CALL_CONTEXT_STACK_OVERFLOW;
+			}
+			/* restore registers */
+			p_ctx->SP = call_ctx.previous_SP;
+			p_ctx->IP = call_ctx.return_address;
+			break; /* no args */
 
+			/* TRIGGERED BRACKPOINT */
 		case SVM_REG_BRK:
-			break;
+			if (m_pdbg_proc) {
+				if (m_pdbg_proc(p_ctx) == SVMI_DBG_PROC_STATUS_STOP) {
+					return SVMI_STATUS_EXECUTION_HALTED; //finish p-code execution
+				}
+			}
+			break; /* no args */
 
 			/* HALT */
 		case SVM_REG_HALT:
@@ -528,12 +567,9 @@ SVMI_STATUS SVMI::exec(SVMI_context* p_ctx)
 
 		case SVM_REG_FLOOR:
 			break;
-
-		default:
-			return SVMI_STATUS_INVALID_INSTRUCTION;
 		}
 	}
-	return SVMI_STATUS();
+	return SVMI_STATUS_INVALID_INSTRUCTION;
 }
 
 SVMI::SVMI()
@@ -544,13 +580,15 @@ SVMI::~SVMI()
 {
 }
 
-SVMI_STATUS SVMI::init(SVMI_image_info* p_image, const SVMI_native_decl* p_natives)
+SVMI_STATUS SVMI::init(SVMI_image_info* p_image, const SVMI_native_decl* p_natives, SVMI_dbg_proc p_dbgproc)
 {
 	if (!p_image || !p_natives)
 		return SVMI_STATUS_INVALID_PARAM;
 
+	m_pdbg_proc = p_dbgproc;
 	m_pnatives = p_natives;
 	m_pimage_info = p_image;
+	m_vnatives_idxs.resize(m_pimage_info->get_num_imports());
 	return SVMI_STATUS_OK;
 }
 

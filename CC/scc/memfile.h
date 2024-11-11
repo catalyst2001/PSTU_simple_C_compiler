@@ -19,6 +19,7 @@ class memfile
 	size_t m_nsize;
 public:
 	memfile();
+	memfile(const char *p_text, size_t textlen);
 	~memfile();
 
 	MEMFILE_STATUS load(const char *p_file_path);

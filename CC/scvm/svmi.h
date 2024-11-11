@@ -24,7 +24,9 @@ enum SVMI_STATUS {
 	SVMI_STATUS_FLOATING_POINT_DIVISION_BY_ZERO,
 	SVMI_STATUS_INT_DIVISION_BY_ZERO,
 	SVMI_STATUS_EXECUTION_HALTED,
-	SVMI_STATUS_STACK_OVERFLOW
+	SVMI_STATUS_STACK_OVERFLOW,
+	SVMI_STATUS_CALL_CONTEXT_STACK_OVERFLOW,
+	SVMI_STATUS_IMPORT_INDEX_OUT_OF_BOUNDS
 };
 
 /* reference counter base class */
@@ -102,6 +104,7 @@ protected:
 	size_t   m_ndata_size;
 	size_t   m_ncode_size;
 	size_t   m_nimage_imports_table_size;
+
 public:
 	SVMI_image_info() : m_pimage(nullptr), m_pdataseg(nullptr), m_pcodeseg(nullptr), m_pimage_imports_table(nullptr),
 		m_nimage_size(0), m_ndata_size(0), m_ncode_size(0), m_nimage_imports_table_size(0) {}
@@ -118,14 +121,15 @@ public:
 
 class SVMI;
 
+struct SVMI_call_context {
+	uint32_t return_address;
+	uint32_t previous_SP;
+};
+
 /* for each thread SVMI context */
 class SVMI_context : private SVMI_VCPU_registers, public SVMI_reference_counted
 {
 	friend class SVMI;
-	struct SVMI_call_context {
-		uint32_t return_address;
-		uint32_t previous_SP;
-	};
 	std::vector<SVMI_call_context> m_call_contexts;
 
 	/* stack */
@@ -136,6 +140,18 @@ protected:
 	/* for SVMI */
 	inline ucell_t  get_stack_size() { return m_nstack_size; }
 	inline cell_t  *get_stack() { return m_pstack; }
+	inline bool push_call_context(SVMI_call_context &callctx) {
+		m_call_contexts.push_back(callctx);
+		return true;
+	}
+	inline bool pop_call_context(SVMI_call_context& callctx) {
+		if (!m_call_contexts.empty()) {
+			callctx = m_call_contexts.back();
+			m_call_contexts.pop_back();
+			return true;
+		}
+		return false;	
+	}
 public:
 	SVMI_context() {}
 	~SVMI_context() {}
@@ -169,7 +185,15 @@ public:
 };
 
 /* SVMI natives */
-typedef SVMI_STATUS (*SVMI_native)(uint8_t *p_pcode, SVMI_context *p_ctx);
+typedef cell_t (*SVMI_native)(SVMI_context *p_ctx);
+
+/* debug proc */
+enum SVMI_DBG_PROC_STATUS {
+	SVMI_DBG_PROC_STATUS_CONTINUE = 0,
+	SVMI_DBG_PROC_STATUS_STOP
+};
+
+typedef SVMI_DBG_PROC_STATUS (*SVMI_dbg_proc)(SVMI_context* p_ctx);
 
 struct SVMI_native_decl
 {
@@ -185,6 +209,8 @@ class SVMI
 	std::vector<SVMI_context*> m_busy_contexts;
 	const SVMI_native_decl    *m_pnatives;
 	SVMI_image_info           *m_pimage_info;
+	std::vector<uint32_t>      m_vnatives_idxs;
+	SVMI_dbg_proc              m_pdbg_proc;
 
 	/* interpreter */
 	SVMI_STATUS exec(SVMI_context *p_ctx);
@@ -192,7 +218,7 @@ class SVMI
 public:
 	SVMI();
 	~SVMI();
-	SVMI_STATUS   init(SVMI_image_info* p_image_info, const SVMI_native_decl* p_natives);
+	SVMI_STATUS   init(SVMI_image_info* p_image_info, const SVMI_native_decl* p_natives, SVMI_dbg_proc p_dbgproc);
 	SVMI_STATUS   shutdown();
 
 	/* context dependend calls */

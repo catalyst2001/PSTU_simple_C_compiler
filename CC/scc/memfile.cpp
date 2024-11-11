@@ -6,6 +6,12 @@ memfile::memfile() : m_ptext(nullptr), m_nsize(0)
 {
 }
 
+memfile::memfile(const char* p_text, size_t textlen)
+{
+  m_ptext = (char *)p_text;
+  m_nsize = textlen;
+}
+
 memfile::~memfile()
 {
 }
@@ -65,7 +71,7 @@ MEMFILE_STATUS memfile::release()
 
 bool memfile::is_empty()
 {
-  return !!m_nsize;
+  return m_nsize==0;
 }
 
 char* memfile::get_text()
