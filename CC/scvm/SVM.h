@@ -1,7 +1,5 @@
 /**
 * simple virtual machine
-*
-*
 */
 #pragma once
 #include <stdint.h>
@@ -69,7 +67,7 @@ enum SVM_OP : uint32_t
 	SVM_OP_DEC,
 	SVM_OP_MUL,
 	SVM_OP_DIV,
-	SVM_OP_MOD,
+	SVM_OP_MOD,  //TODO: K.D. FMOD NOT IMPLEMENTED IN VM!
 
 	SVM_OP_SHL,
 	SVM_OP_SHR,
