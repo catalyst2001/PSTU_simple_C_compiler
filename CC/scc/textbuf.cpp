@@ -93,7 +93,7 @@ void scc_textparser::restore_context(const scctp_ctx &src)
 
 bool scc_textparser::is_end()
 {
-	return m_ppos >= m_pend;
+	return !(m_ppos < m_pend);
 }
 
 bool scc_textparser::pos_increment()
